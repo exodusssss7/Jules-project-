@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SyncStream Party</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="landing" class="container">
+        <h1>Welcome to SyncStream Party</h1>
+        <p>Watch videos together with your friends in perfect sync.</p>
+
+        <div class="form-group">
+            <label for="nickname">Your Nickname:</label>
+            <input type="text" id="nickname" placeholder="Enter nickname" required>
+        </div>
+
+        <div class="actions">
+            <div class="create-section">
+                <h3>Start a new party</h3>
+                <button id="createBtn" class="btn primary">Create Room</button>
+            </div>
+
+            <div class="join-section">
+                <h3>Join an existing party</h3>
+                <input type="text" id="joinRoomId" placeholder="Room ID">
+                <button id="joinBtn" class="btn secondary">Join Room</button>
+            </div>
+        </div>
+        <p id="errorMsg" class="error"></p>
+    </div>
+
+    <!-- The Party UI will be injected or shown here later -->
+    <div id="party" class="container hidden">
+        <div class="header">
+            <h2>Room: <span id="displayRoomId"></span></h2>
+            <button id="leaveBtn" class="btn secondary small">Leave</button>
+        </div>
+
+        <div class="main-content">
+            <div class="video-container">
+                <div id="adminControls" class="hidden">
+                    <h3>Upload Video for Party</h3>
+                    <input type="file" id="videoUpload" accept="video/mp4,video/webm,video/ogg">
+                    <button id="uploadBtn" class="btn primary">Upload & Start</button>
+                    <p id="uploadStatus"></p>
+                </div>
+                <div id="playerContainer" class="hidden">
+                    <video id="syncPlayer" controls preload="auto"></video>
+                </div>
+                <div id="waitingMessage">
+                    <p>Waiting for Admin to upload a video...</p>
+                </div>
+            </div>
+
+            <div class="chat-container">
+                <h3>Live Chat</h3>
+                <div id="chatBox" class="chat-messages"></div>
+                <div class="chat-input-area">
+                    <input type="text" id="chatInput" placeholder="Type a message...">
+                    <button id="sendBtn" class="btn primary">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
