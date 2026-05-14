@@ -25,7 +25,6 @@ const videoUpload = document.getElementById('videoUpload');
 const uploadBtn = document.getElementById('uploadBtn');
 const uploadStatus = document.getElementById('uploadStatus');
 const syncPlayer = document.getElementById('syncPlayer');
-const fullscreenBtn = document.getElementById('fullscreenBtn');
 const chatOverlay = document.getElementById('chatOverlay');
 
 // State
@@ -176,35 +175,58 @@ socket.on('syncVideo', ({ time, status }) => {
 });
 
 // --- Event Listeners: Fullscreen ---
-fullscreenBtn.addEventListener('click', () => {
+
+// When the native player enters fullscreen, it only fullscreens the <video> element.
+// We want to force the #videoWrapper (which contains the chat) to fullscreen instead.
+syncPlayer.addEventListener('fullscreenchange', (e) => {
+    // This is fired on Safari/iOS natively, but modern desktop browsers might
+    // not fire this reliably on the video if the wrapper is what goes fullscreen.
+    // However, if the user explicitly clicked the native control:
+    if (document.fullscreenElement === syncPlayer) {
+        document.exitFullscreen().then(() => {
+            // Re-trigger fullscreen on the wrapper
+            if (videoWrapper.requestFullscreen) {
+                videoWrapper.requestFullscreen();
+            }
+        }).catch(err => console.error("Error swapping fullscreen element:", err));
+    }
+});
+
+// A robust cross-browser way to intercept the native fullscreen click is difficult
+// because browsers lock down shadow DOM media controls. The best fallback
+// while keeping the native button visible is using the double-click.
+function toggleFullscreen() {
     if (!document.fullscreenElement) {
         if (videoWrapper.requestFullscreen) {
             videoWrapper.requestFullscreen();
-        } else if (videoWrapper.webkitRequestFullscreen) { /* Safari */
+        } else if (videoWrapper.webkitRequestFullscreen) {
             videoWrapper.webkitRequestFullscreen();
-        } else if (videoWrapper.msRequestFullscreen) { /* IE11 */
+        } else if (videoWrapper.msRequestFullscreen) {
             videoWrapper.msRequestFullscreen();
         }
     } else {
         if (document.exitFullscreen) {
             document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) { /* Safari */
+        } else if (document.webkitExitFullscreen) {
             document.webkitExitFullscreen();
-        } else if (document.msExitFullscreen) { /* IE11 */
+        } else if (document.msExitFullscreen) {
             document.msExitFullscreen();
         }
     }
-});
+}
 
-// Update button text depending on fullscreen state
+// Allow double-click on video to toggle the WRAPPER fullscreen
+syncPlayer.addEventListener('dblclick', toggleFullscreen);
+
+// Catch native fullscreen events (like the user pressing 'f' while video is focused)
 document.addEventListener('fullscreenchange', () => {
-    if (document.fullscreenElement) {
-        fullscreenBtn.textContent = 'Exit Fullscreen';
-    } else {
-        fullscreenBtn.textContent = 'Toggle Fullscreen';
+    // If the browser natively full-screened JUST the video element, exit it and fullscreen the wrapper.
+    if (document.fullscreenElement === syncPlayer) {
+        document.exitFullscreen().then(() => {
+            toggleFullscreen();
+        });
     }
 });
-
 
 // --- Event Listeners: Landing ---
 

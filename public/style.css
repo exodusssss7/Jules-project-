@@ -167,17 +167,18 @@ input[type="text"] {
 }
 
 .overlay-msg {
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(220, 38, 38, 0.85); /* Red transparent */
     color: white;
-    padding: 8px 12px;
-    border-radius: 12px;
-    font-size: 0.95rem;
+    padding: 10px 16px;
+    border-radius: 30px; /* Pill-shaped / circular stylish box */
+    font-size: 1rem;
     animation: fadeout 4s forwards;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    align-self: flex-start; /* Fit content */
 }
 
 .overlay-msg strong {
-    color: #a5b4fc;
+    color: #fca5a5; /* Light red/pink for sender name to contrast well */
 }
 
 @keyframes fadeout {
