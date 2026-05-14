@@ -279,8 +279,11 @@ function sendChatMessage(text) {
     }
 }
 
+let overlayIdleTimer = null;
+
 function showOverlayMessage(sender, text) {
     chatOverlay.classList.remove('hidden');
+    chatOverlay.classList.remove('idle');
 
     const overlayMsg = document.createElement('div');
     overlayMsg.classList.add('overlay-msg');
@@ -297,12 +300,16 @@ function showOverlayMessage(sender, text) {
 
     chatOverlay.appendChild(overlayMsg);
 
-    // Automatically remove the message from the DOM after animation completes (4s)
-    setTimeout(() => {
-        if (chatOverlay.contains(overlayMsg)) {
-            chatOverlay.removeChild(overlayMsg);
-        }
-    }, 4000);
+    // Cap at exactly 4 messages max
+    while (chatOverlay.childElementCount > 4) {
+        chatOverlay.removeChild(chatOverlay.firstElementChild);
+    }
+
+    // Reset global idle timer
+    clearTimeout(overlayIdleTimer);
+    overlayIdleTimer = setTimeout(() => {
+        chatOverlay.classList.add('idle');
+    }, 6000); // Wait 6 seconds before fading out the whole stack
 }
 
 function appendMessage(sender, text) {

@@ -166,14 +166,20 @@ body:not(.dark-mode) .btn.secondary:hover {
 
 #chatOverlay {
     position: absolute;
-    bottom: 60px; /* Stay above native video controls */
+    bottom: 120px; /* Moved up to clear the fast reply bar with a gap */
     left: 20px;
     max-width: 60%;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 8px;
     pointer-events: none; /* Let clicks pass through to the video */
     z-index: 10;
+    transition: opacity 1s ease-out; /* Smooth fadeout for the whole container */
+    opacity: 1;
+}
+
+#chatOverlay.idle {
+    opacity: 0;
 }
 
 .overlay-msg {
@@ -182,19 +188,20 @@ body:not(.dark-mode) .btn.secondary:hover {
     padding: 10px 16px;
     border-radius: 30px; /* Pill-shaped / circular stylish box */
     font-size: 1rem;
-    animation: fadeout 4s forwards;
     box-shadow: 0 4px 6px rgba(0,0,0,0.2);
     align-self: flex-start; /* Fit content */
+    transition: opacity 0.3s ease-in-out;
 }
+
+/* Transparency gradient: Nth last child rules
+   (1st is oldest, 4th is newest) */
+.overlay-msg:nth-last-child(1) { opacity: 1; }
+.overlay-msg:nth-last-child(2) { opacity: 0.7; }
+.overlay-msg:nth-last-child(3) { opacity: 0.4; }
+.overlay-msg:nth-last-child(4) { opacity: 0.15; }
 
 .overlay-msg strong {
     color: #fca5a5; /* Light red/pink for sender name to contrast well */
-}
-
-@keyframes fadeout {
-    0% { opacity: 1; transform: translateY(0); }
-    80% { opacity: 1; transform: translateY(0); }
-    100% { opacity: 0; transform: translateY(-10px); }
 }
 
 /* Hide the chat overlay when NOT in fullscreen to avoid double messages */
@@ -258,7 +265,7 @@ body:not(.dark-mode) .btn.secondary:hover {
     aspect-ratio: auto;
 }
 #videoWrapper:fullscreen #chatOverlay {
-    bottom: 80px;
+    bottom: 120px;
     font-size: 1.2rem;
 }
 
