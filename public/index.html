@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Theme Toggle positioned top right -->
+    <button id="themeToggle" class="btn small" style="position: absolute; top: 1rem; right: 1rem;">🌙 Dark Mode</button>
+
     <div id="landing" class="container">
         <h1>Welcome to SyncStream Party</h1>
         <p>Watch videos together with your friends in perfect sync.</p>
@@ -51,6 +54,7 @@
                         <video id="syncPlayer" controls preload="auto"></video>
                         <div id="chatOverlay" class="hidden"></div>
                     </div>
+                    <button id="fullscreenBtn" class="btn secondary small" style="margin-top: 10px;">Toggle Fullscreen</button>
                 </div>
                 <div id="waitingMessage">
                     <p>Waiting for Admin to upload a video...</p>

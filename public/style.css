@@ -7,6 +7,13 @@
     --border-color: #e5e7eb;
 }
 
+body.dark-mode {
+    --bg-color: #111827;
+    --card-bg: #1f2937;
+    --text-color: #f3f4f6;
+    --border-color: #374151;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--bg-color);
@@ -31,7 +38,7 @@ body {
 
 h1, h2, h3 {
     margin-top: 0;
-    color: #111827;
+    color: var(--text-color);
 }
 
 .form-group {
@@ -64,7 +71,7 @@ input[type="text"] {
     padding: 1rem;
     border: 1px solid var(--border-color);
     border-radius: 6px;
-    background-color: #f9fafb;
+    background-color: transparent;
 }
 
 .btn {
@@ -87,11 +94,14 @@ input[type="text"] {
 }
 
 .btn.secondary {
-    background-color: #e5e7eb;
-    color: #374151;
+    background-color: var(--border-color);
+    color: var(--text-color);
 }
 
 .btn.secondary:hover {
+    background-color: #4b5563; /* slightly lighter for dark mode hover */
+}
+body:not(.dark-mode) .btn.secondary:hover {
     background-color: #d1d5db;
 }
 
@@ -217,7 +227,7 @@ input[type="text"] {
 .chat-container h3 {
     padding: 1rem;
     margin: 0;
-    background-color: #f9fafb;
+    background-color: var(--border-color);
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -233,7 +243,7 @@ input[type="text"] {
 .message {
     padding: 0.5rem;
     border-radius: 4px;
-    background-color: #f3f4f6;
+    background-color: var(--border-color);
     word-break: break-word;
 }
 
@@ -252,7 +262,7 @@ input[type="text"] {
     display: flex;
     padding: 1rem;
     border-top: 1px solid var(--border-color);
-    background-color: #f9fafb;
+    background-color: var(--card-bg);
 }
 
 .chat-input-area input {
