@@ -52,7 +52,12 @@
                 <div id="playerContainer" class="hidden">
                     <div id="videoWrapper">
                         <video id="syncPlayer" controls preload="auto"></video>
+                        <button id="exitFsBtn">← Back</button>
                         <div id="chatOverlay" class="hidden"></div>
+                        <div id="fastReplyContainer">
+                            <input type="text" id="fsChatInput" placeholder="Fast reply...">
+                            <button id="fsSendBtn" class="btn primary small">Send</button>
+                        </div>
                     </div>
                     <button id="fullscreenBtn" class="btn secondary small" style="margin-top: 10px;">Toggle Fullscreen</button>
                 </div>

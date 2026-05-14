@@ -28,6 +28,9 @@ const syncPlayer = document.getElementById('syncPlayer');
 const chatOverlay = document.getElementById('chatOverlay');
 const fullscreenBtn = document.getElementById('fullscreenBtn');
 const themeToggle = document.getElementById('themeToggle');
+const exitFsBtn = document.getElementById('exitFsBtn');
+const fsChatInput = document.getElementById('fsChatInput');
+const fsSendBtn = document.getElementById('fsSendBtn');
 
 // State
 let currentRoomId = null;
@@ -216,6 +219,17 @@ document.addEventListener('fullscreenchange', () => {
     }
 });
 
+exitFsBtn.addEventListener('click', () => {
+    if (document.exitFullscreen) {
+        document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+    }
+});
+
+
 // --- Event Listeners: Landing ---
 
 createBtn.addEventListener('click', () => {
@@ -258,6 +272,12 @@ joinBtn.addEventListener('click', () => {
 });
 
 // --- Event Listeners: Chat ---
+
+function sendChatMessage(text) {
+    if (text) {
+        socket.emit('chatMessage', text);
+    }
+}
 
 function showOverlayMessage(sender, text) {
     chatOverlay.classList.remove('hidden');
@@ -308,7 +328,7 @@ function appendMessage(sender, text) {
 sendBtn.addEventListener('click', () => {
     const text = chatInput.value.trim();
     if (text) {
-        socket.emit('chatMessage', text);
+        sendChatMessage(text);
         chatInput.value = '';
     }
 });
@@ -316,6 +336,21 @@ sendBtn.addEventListener('click', () => {
 chatInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         sendBtn.click();
+    }
+});
+
+// Fast Reply in Fullscreen
+fsSendBtn.addEventListener('click', () => {
+    const text = fsChatInput.value.trim();
+    if (text) {
+        sendChatMessage(text);
+        fsChatInput.value = '';
+    }
+});
+
+fsChatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        fsSendBtn.click();
     }
 });
 
