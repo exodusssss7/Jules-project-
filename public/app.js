@@ -19,11 +19,14 @@ const sendBtn = document.getElementById('sendBtn');
 // DOM Elements - Video
 const adminControls = document.getElementById('adminControls');
 const playerContainer = document.getElementById('playerContainer');
+const videoWrapper = document.getElementById('videoWrapper');
 const waitingMessage = document.getElementById('waitingMessage');
 const videoUpload = document.getElementById('videoUpload');
 const uploadBtn = document.getElementById('uploadBtn');
 const uploadStatus = document.getElementById('uploadStatus');
 const syncPlayer = document.getElementById('syncPlayer');
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+const chatOverlay = document.getElementById('chatOverlay');
 
 // State
 let currentRoomId = null;
@@ -172,6 +175,37 @@ socket.on('syncVideo', ({ time, status }) => {
     setTimeout(() => { ignoreSyncEvent = false; }, 100);
 });
 
+// --- Event Listeners: Fullscreen ---
+fullscreenBtn.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+        if (videoWrapper.requestFullscreen) {
+            videoWrapper.requestFullscreen();
+        } else if (videoWrapper.webkitRequestFullscreen) { /* Safari */
+            videoWrapper.webkitRequestFullscreen();
+        } else if (videoWrapper.msRequestFullscreen) { /* IE11 */
+            videoWrapper.msRequestFullscreen();
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) { /* Safari */
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) { /* IE11 */
+            document.msExitFullscreen();
+        }
+    }
+});
+
+// Update button text depending on fullscreen state
+document.addEventListener('fullscreenchange', () => {
+    if (document.fullscreenElement) {
+        fullscreenBtn.textContent = 'Exit Fullscreen';
+    } else {
+        fullscreenBtn.textContent = 'Toggle Fullscreen';
+    }
+});
+
+
 // --- Event Listeners: Landing ---
 
 createBtn.addEventListener('click', () => {
@@ -215,7 +249,34 @@ joinBtn.addEventListener('click', () => {
 
 // --- Event Listeners: Chat ---
 
+function showOverlayMessage(sender, text) {
+    chatOverlay.classList.remove('hidden');
+
+    const overlayMsg = document.createElement('div');
+    overlayMsg.classList.add('overlay-msg');
+
+    if (sender === 'System') {
+        overlayMsg.style.fontStyle = 'italic';
+        overlayMsg.textContent = text;
+    } else {
+        const strong = document.createElement('strong');
+        strong.textContent = `${sender}: `;
+        overlayMsg.appendChild(strong);
+        overlayMsg.appendChild(document.createTextNode(text));
+    }
+
+    chatOverlay.appendChild(overlayMsg);
+
+    // Automatically remove the message from the DOM after animation completes (4s)
+    setTimeout(() => {
+        if (chatOverlay.contains(overlayMsg)) {
+            chatOverlay.removeChild(overlayMsg);
+        }
+    }, 4000);
+}
+
 function appendMessage(sender, text) {
+    // Add to standard chat box
     const msgDiv = document.createElement('div');
     msgDiv.classList.add('message');
     if (sender === 'System') {
@@ -229,6 +290,9 @@ function appendMessage(sender, text) {
     }
     chatBox.appendChild(msgDiv);
     chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Also show it on the video overlay
+    showOverlayMessage(sender, text);
 }
 
 sendBtn.addEventListener('click', () => {

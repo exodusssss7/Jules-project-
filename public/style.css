@@ -140,11 +140,68 @@ input[type="text"] {
     flex-direction: column;
 }
 
-#syncPlayer {
+#videoWrapper {
+    position: relative;
     width: 100%;
     background-color: #000;
     border-radius: 8px;
+    overflow: hidden;
+}
+
+#syncPlayer {
+    width: 100%;
     aspect-ratio: 16 / 9;
+    display: block;
+}
+
+#chatOverlay {
+    position: absolute;
+    bottom: 60px; /* Stay above native video controls */
+    left: 20px;
+    max-width: 60%;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    pointer-events: none; /* Let clicks pass through to the video */
+    z-index: 10;
+}
+
+.overlay-msg {
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    animation: fadeout 4s forwards;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.overlay-msg strong {
+    color: #a5b4fc;
+}
+
+@keyframes fadeout {
+    0% { opacity: 1; transform: translateY(0); }
+    80% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-10px); }
+}
+
+/* Hide the chat overlay when NOT in fullscreen to avoid double messages */
+#videoWrapper:not(:fullscreen) #chatOverlay {
+    display: none;
+}
+
+/* When fullscreen, make sure the video wrapper takes up everything */
+#videoWrapper:fullscreen {
+    border-radius: 0;
+}
+#videoWrapper:fullscreen #syncPlayer {
+    height: 100%;
+    aspect-ratio: auto;
+}
+#videoWrapper:fullscreen #chatOverlay {
+    bottom: 80px;
+    font-size: 1.2rem;
 }
 
 .chat-container {
