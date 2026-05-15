@@ -241,12 +241,17 @@ body:not(.dark-mode) .btn.secondary:hover {
 }
 
 #fsChatInput {
-    background: rgba(255, 255, 255, 0.9);
-    border: none;
+    background: rgba(0, 0, 0, 0.7);
+    color: #f3f4f6;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 4px;
     padding: 8px;
     outline: none;
     width: 200px;
+}
+
+#fsChatInput::placeholder {
+    color: rgba(243, 244, 246, 0.6);
 }
 
 /* Hide fullscreen elements when not in fullscreen */

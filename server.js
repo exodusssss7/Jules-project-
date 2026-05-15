@@ -37,7 +37,15 @@ const upload = multer({
 });
 
 // In-memory store for rooms
-// Structure: roomId -> { admin: socketId, users: Set<socketId>, videoTime: number, videoStatus: 'playing' | 'paused', hasVideo: boolean, videoPath: string }
+// Structure: roomId -> {
+//   adminId: string (userId of admin),
+//   users: Map<userId, {socketId, nickname}>,
+//   videoTime: number,
+//   videoStatus: 'playing' | 'paused',
+//   hasVideo: boolean,
+//   videoPath: string,
+//   cleanupTimer: NodeJS.Timeout | null
+// }
 const rooms = {};
 
 // --- Express Endpoints for Video Upload & Streaming ---
@@ -121,46 +129,59 @@ app.get('/video/:roomId', (req, res) => {
 io.on('connection', (socket) => {
     console.log(`User connected: ${socket.id}`);
 
-    socket.on('createRoom', ({ roomId, nickname }, callback) => {
+    socket.on('createRoom', ({ roomId, nickname, userId }, callback) => {
         if (rooms[roomId]) {
             return callback({ success: false, message: 'Room already exists.' });
         }
 
         rooms[roomId] = {
-            admin: socket.id,
-            users: new Set([socket.id]),
+            adminId: userId,
+            users: new Map(),
             videoTime: 0,
             videoStatus: 'paused',
-            hasVideo: false
+            hasVideo: false,
+            cleanupTimer: null
         };
+
+        rooms[roomId].users.set(userId, { socketId: socket.id, nickname });
 
         socket.join(roomId);
         socket.data.nickname = nickname;
         socket.data.roomId = roomId;
+        socket.data.userId = userId;
 
-        console.log(`Room ${roomId} created by ${socket.id} (${nickname})`);
+        console.log(`Room ${roomId} created by ${userId} (${nickname})`);
         callback({ success: true, isAdmin: true });
     });
 
-    socket.on('joinRoom', ({ roomId, nickname }, callback) => {
+    socket.on('joinRoom', ({ roomId, nickname, userId }, callback) => {
         const room = rooms[roomId];
         if (!room) {
             return callback({ success: false, message: 'Room does not exist.' });
         }
 
-        room.users.add(socket.id);
+        // Clear cleanup timer if someone joins
+        if (room.cleanupTimer) {
+            clearTimeout(room.cleanupTimer);
+            room.cleanupTimer = null;
+        }
+
+        room.users.set(userId, { socketId: socket.id, nickname });
         socket.join(roomId);
         socket.data.nickname = nickname;
         socket.data.roomId = roomId;
+        socket.data.userId = userId;
 
-        console.log(`User ${socket.id} (${nickname}) joined room ${roomId}`);
+        const isAdmin = (room.adminId === userId);
+
+        console.log(`User ${userId} (${nickname}) joined room ${roomId}. Is Admin? ${isAdmin}`);
 
         // Notify others in the room
         socket.to(roomId).emit('chatMessage', { sender: 'System', message: `${nickname} joined the party!` });
 
         callback({
             success: true,
-            isAdmin: false,
+            isAdmin: isAdmin,
             hasVideo: room.hasVideo,
             videoTime: room.videoTime,
             videoStatus: room.videoStatus
@@ -177,7 +198,9 @@ io.on('connection', (socket) => {
     // Admin video controls sync
     socket.on('syncVideo', ({ time, status }) => {
         const roomId = socket.data.roomId;
-        if (roomId && rooms[roomId] && rooms[roomId].admin === socket.id) {
+        const userId = socket.data.userId;
+
+        if (roomId && rooms[roomId] && rooms[roomId].adminId === userId) {
             rooms[roomId].videoTime = time;
             rooms[roomId].videoStatus = status;
 
@@ -189,19 +212,33 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log(`User disconnected: ${socket.id}`);
         const roomId = socket.data.roomId;
+        const userId = socket.data.userId;
 
         if (roomId && rooms[roomId]) {
-            rooms[roomId].users.delete(socket.id);
-            socket.to(roomId).emit('chatMessage', { sender: 'System', message: `${socket.data.nickname} left the party.` });
+            const room = rooms[roomId];
 
-            if (rooms[roomId].admin === socket.id) {
-                // Admin left, you might want to reassign admin or close room
-                socket.to(roomId).emit('chatMessage', { sender: 'System', message: 'The Admin has left the party. The room might be closed.' });
-                // For simplicity, let's just delete the room if admin leaves, or we could keep it.
-                // delete rooms[roomId];
-            } else if (rooms[roomId].users.size === 0) {
-                // Clean up empty room
-                delete rooms[roomId];
+            // Only remove them if the socket matches (in case they reconnected on a new socket before the old one timed out)
+            const userData = room.users.get(userId);
+            if (userData && userData.socketId === socket.id) {
+                room.users.delete(userId);
+                socket.to(roomId).emit('chatMessage', { sender: 'System', message: `${socket.data.nickname} disconnected (they might be refreshing).` });
+
+                // If room is empty, start the 2-minute cleanup timer
+                if (room.users.size === 0) {
+                    console.log(`Room ${roomId} is empty. Starting 2-minute cleanup timer.`);
+                    room.cleanupTimer = setTimeout(() => {
+                        console.log(`Cleaning up empty room: ${roomId}`);
+                        if (rooms[roomId].hasVideo && rooms[roomId].videoPath) {
+                            try {
+                                fs.unlinkSync(rooms[roomId].videoPath);
+                                console.log(`Deleted video file: ${rooms[roomId].videoPath}`);
+                            } catch (err) {
+                                console.error(`Error deleting video file for room ${roomId}:`, err);
+                            }
+                        }
+                        delete rooms[roomId];
+                    }, 2 * 60 * 1000); // 2 minutes
+                }
             }
         }
     });

@@ -36,6 +36,19 @@ const fsSendBtn = document.getElementById('fsSendBtn');
 let currentRoomId = null;
 let isUserAdmin = false;
 let myNickname = '';
+let myUserId = null;
+
+// --- Session Logic ---
+function getOrCreateUserId() {
+    let id = localStorage.getItem('syncstream_userId');
+    if (!id) {
+        id = 'user_' + Math.random().toString(36).substring(2, 10);
+        localStorage.setItem('syncstream_userId', id);
+    }
+    return id;
+}
+
+myUserId = getOrCreateUserId();
 
 // --- Theme Toggle ---
 themeToggle.addEventListener('click', () => {
@@ -54,6 +67,8 @@ function generateRoomId() {
 }
 
 function showPartyUI(roomId, isAdmin, roomData = {}) {
+    localStorage.setItem('syncstream_lastRoomId', roomId);
+    localStorage.setItem('syncstream_nickname', myNickname);
     currentRoomId = roomId;
     isUserAdmin = isAdmin;
 
@@ -71,9 +86,6 @@ let ignoreSyncEvent = false;
 
 function setupVideoUI(roomData) {
     if (isUserAdmin) {
-        adminControls.classList.remove('hidden');
-        waitingMessage.classList.add('hidden');
-
         // Admin controls events
         syncPlayer.addEventListener('play', () => {
             if(!ignoreSyncEvent) emitSync('playing');
@@ -91,6 +103,14 @@ function setupVideoUI(roomData) {
                 emitSync('playing');
             }
         }, 3000); // Send sync every 3 seconds
+
+        // If the admin is returning and a video was already uploaded, load it immediately
+        if (roomData.hasVideo) {
+            loadVideo(roomData.videoTime, roomData.videoStatus);
+        } else {
+            adminControls.classList.remove('hidden');
+            waitingMessage.classList.add('hidden');
+        }
 
     } else {
         // Normal user
@@ -240,7 +260,7 @@ createBtn.addEventListener('click', () => {
     }
 
     const newRoomId = generateRoomId();
-    socket.emit('createRoom', { roomId: newRoomId, nickname: myNickname }, (response) => {
+    socket.emit('createRoom', { roomId: newRoomId, nickname: myNickname, userId: myUserId }, (response) => {
         if (response.success) {
             showPartyUI(newRoomId, response.isAdmin);
         } else {
@@ -262,13 +282,37 @@ joinBtn.addEventListener('click', () => {
         return;
     }
 
-    socket.emit('joinRoom', { roomId, nickname: myNickname }, (response) => {
+    socket.emit('joinRoom', { roomId, nickname: myNickname, userId: myUserId }, (response) => {
         if (response.success) {
             showPartyUI(roomId, response.isAdmin, response);
         } else {
             errorMsg.textContent = response.message || 'Failed to join room.';
+            // If the room doesn't exist anymore, clear auto-join info
+            localStorage.removeItem('syncstream_lastRoomId');
         }
     });
+});
+
+// Auto-rejoin logic on page load
+window.addEventListener('DOMContentLoaded', () => {
+    const lastRoomId = localStorage.getItem('syncstream_lastRoomId');
+    const lastNickname = localStorage.getItem('syncstream_nickname');
+
+    if (lastRoomId && lastNickname) {
+        nicknameInput.value = lastNickname;
+        joinRoomIdInput.value = lastRoomId;
+
+        // Attempt to auto join
+        socket.emit('joinRoom', { roomId: lastRoomId, nickname: lastNickname, userId: myUserId }, (response) => {
+            if (response.success) {
+                myNickname = lastNickname;
+                showPartyUI(lastRoomId, response.isAdmin, response);
+                appendMessage('System', 'You were automatically reconnected.');
+            } else {
+                localStorage.removeItem('syncstream_lastRoomId');
+            }
+        });
+    }
 });
 
 // --- Event Listeners: Chat ---
@@ -365,8 +409,9 @@ socket.on('chatMessage', ({ sender, message }) => {
     appendMessage(sender, message);
 });
 
-// --- Event Listeners: Leave ---
 leaveBtn.addEventListener('click', () => {
+    // Clear session so we don't auto-rejoin
+    localStorage.removeItem('syncstream_lastRoomId');
     // Refresh the page to reset state completely
     window.location.reload();
 });
