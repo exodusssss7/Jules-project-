@@ -183,8 +183,8 @@ body:not(.dark-mode) .btn.secondary:hover {
 }
 
 .overlay-msg {
-    background: rgba(220, 38, 38, 0.85); /* Red transparent */
-    color: white;
+    background: rgba(0, 0, 0, 0.65); /* Dark transparent */
+    color: #f3f4f6; /* Off-white text */
     padding: 10px 16px;
     border-radius: 30px; /* Pill-shaped / circular stylish box */
     font-size: 1rem;
@@ -201,7 +201,7 @@ body:not(.dark-mode) .btn.secondary:hover {
 .overlay-msg:nth-last-child(4) { opacity: 0.15; }
 
 .overlay-msg strong {
-    color: #fca5a5; /* Light red/pink for sender name to contrast well */
+    color: #9ca3af; /* Soft gray for sender name to be unobtrusive */
 }
 
 /* Hide the chat overlay when NOT in fullscreen to avoid double messages */
