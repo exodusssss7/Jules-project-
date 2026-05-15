@@ -100,6 +100,7 @@ app.get('/video/:roomId', (req, res) => {
         let mimeType = 'video/mp4';
         if (ext === '.webm') mimeType = 'video/webm';
         else if (ext === '.ogg' || ext === '.ogv') mimeType = 'video/ogg';
+        else if (ext === '.mkv') mimeType = 'video/x-matroska';
 
         const head = {
             'Content-Range': `bytes ${start}-${end}/${fileSize}`,
@@ -115,6 +116,7 @@ app.get('/video/:roomId', (req, res) => {
         let mimeType = 'video/mp4';
         if (ext === '.webm') mimeType = 'video/webm';
         else if (ext === '.ogg' || ext === '.ogv') mimeType = 'video/ogg';
+        else if (ext === '.mkv') mimeType = 'video/x-matroska';
 
         const head = {
             'Content-Length': fileSize,
