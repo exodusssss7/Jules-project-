@@ -24,6 +24,9 @@ const waitingMessage = document.getElementById('waitingMessage');
 const videoUpload = document.getElementById('videoUpload');
 const uploadBtn = document.getElementById('uploadBtn');
 const uploadStatus = document.getElementById('uploadStatus');
+const progressContainer = document.getElementById('progressContainer');
+const uploadProgress = document.getElementById('uploadProgress');
+const uploadPercent = document.getElementById('uploadPercent');
 const syncPlayer = document.getElementById('syncPlayer');
 const chatOverlay = document.getElementById('chatOverlay');
 const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -167,26 +170,53 @@ uploadBtn.addEventListener('click', async () => {
     formData.append('video', file);
 
     uploadBtn.disabled = true;
-    uploadStatus.textContent = 'Uploading... This might take a while for large files.';
+    progressContainer.classList.remove('hidden');
+    uploadProgress.value = 0;
+    uploadPercent.textContent = '0%';
+    uploadStatus.textContent = 'Uploading...';
 
-    try {
-        const response = await fetch(`/upload/${currentRoomId}`, {
-            method: 'POST',
-            body: formData
-        });
+    const xhr = new XMLHttpRequest();
 
-        const result = await response.json();
-        if (result.success) {
-            uploadStatus.textContent = 'Upload complete!';
-            loadVideo();
+    // Listen to the upload progress
+    xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            uploadProgress.value = percentComplete;
+            uploadPercent.textContent = percentComplete + '%';
+        }
+    });
+
+    // Handle completion
+    xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+                const result = JSON.parse(xhr.responseText);
+                if (result.success) {
+                    uploadStatus.textContent = 'Upload complete!';
+                    progressContainer.classList.add('hidden');
+                    loadVideo();
+                } else {
+                    uploadStatus.textContent = 'Upload failed: ' + (result.error || 'Unknown error');
+                    uploadBtn.disabled = false;
+                }
+            } catch (err) {
+                uploadStatus.textContent = 'Upload failed: Invalid server response';
+                uploadBtn.disabled = false;
+            }
         } else {
-            uploadStatus.textContent = 'Upload failed: ' + result.error;
+            uploadStatus.textContent = 'Upload error: Server returned ' + xhr.status;
             uploadBtn.disabled = false;
         }
-    } catch (error) {
-        uploadStatus.textContent = 'Upload error: ' + error.message;
+    });
+
+    // Handle network errors
+    xhr.addEventListener('error', () => {
+        uploadStatus.textContent = 'Upload error: Network failure';
         uploadBtn.disabled = false;
-    }
+    });
+
+    xhr.open('POST', `/upload/${currentRoomId}`, true);
+    xhr.send(formData);
 });
 
 // Socket Events for Video Sync

@@ -274,6 +274,45 @@ body:not(.dark-mode) .btn.secondary:hover {
     font-size: 1.2rem;
 }
 
+/* Progress Bar Styling */
+#progressContainer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+    margin-bottom: 5px;
+}
+
+#uploadProgress {
+    flex-grow: 1;
+    height: 12px;
+    border-radius: 6px;
+    border: none;
+    background-color: var(--border-color);
+}
+
+#uploadProgress::-webkit-progress-bar {
+    background-color: var(--border-color);
+    border-radius: 6px;
+}
+
+#uploadProgress::-webkit-progress-value {
+    background-color: var(--primary-color);
+    border-radius: 6px;
+    transition: width 0.2s ease;
+}
+
+#uploadProgress::-moz-progress-bar {
+    background-color: var(--primary-color);
+    border-radius: 6px;
+}
+
+#uploadPercent {
+    font-size: 0.9rem;
+    font-weight: bold;
+    min-width: 45px;
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
     .main-content {
