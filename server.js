@@ -21,21 +21,6 @@ if (!fs.existsSync('uploads/')){
     fs.mkdirSync('uploads/', { recursive: true });
 }
 
-// Set up multer for video uploads
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'uploads/');
-    },
-    filename: function (req, file, cb) {
-        // Use roomId to name the file
-        cb(null, req.params.roomId + path.extname(file.originalname));
-    }
-});
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: 4 * 1024 * 1024 * 1024 } // 4GB limit
-});
-
 // In-memory store for rooms
 // Structure: roomId -> {
 //   adminId: string (userId of admin),
@@ -48,13 +33,42 @@ const upload = multer({
 // }
 const rooms = {};
 
-// --- Express Endpoints for Video Upload & Streaming ---
+// Set up multer for video uploads
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/');
+    },
+    filename: function (req, file, cb) {
+        // Sanitize roomId to prevent path traversal attacks
+        const safeRoomId = path.basename(req.params.roomId);
+        cb(null, safeRoomId + path.extname(file.originalname));
+    }
+});
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 4 * 1024 * 1024 * 1024 } // 4GB limit
+});
 
-app.post('/upload/:roomId', upload.single('video'), (req, res) => {
-    const roomId = req.params.roomId;
-    if (!rooms[roomId]) {
+// Middleware to check if room exists before processing upload
+const checkRoomExists = (req, res, next) => {
+    const safeRoomId = path.basename(req.params.roomId);
+    if (!rooms[safeRoomId]) {
         return res.status(404).json({ error: 'Room not found' });
     }
+    // Update req.params.roomId to strictly be the safe version for multer
+    req.params.roomId = safeRoomId;
+    next();
+};
+
+// --- Express Endpoints for Video Upload & Streaming ---
+
+// Keep-alive endpoint to prevent Render from sleeping
+app.get('/ping', (req, res) => {
+    res.status(200).send('pong');
+});
+
+app.post('/upload/:roomId', checkRoomExists, upload.single('video'), (req, res) => {
+    const roomId = req.params.roomId;
 
     if (!req.file) {
         return res.status(400).json({ error: 'No video file uploaded' });

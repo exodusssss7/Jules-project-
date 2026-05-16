@@ -83,27 +83,40 @@ function showPartyUI(roomId, isAdmin, roomData = {}) {
 // --- Video & Sync Logic ---
 
 let ignoreSyncEvent = false;
+let syncInterval = null;
+let isVideoUIInitialized = false;
 
 function setupVideoUI(roomData) {
+    if (!isVideoUIInitialized) {
+        if (isUserAdmin) {
+            // Admin controls events
+            syncPlayer.addEventListener('play', () => {
+                if(!ignoreSyncEvent) emitSync('playing');
+            });
+            syncPlayer.addEventListener('pause', () => {
+                if(!ignoreSyncEvent) emitSync('paused');
+            });
+            syncPlayer.addEventListener('seeked', () => {
+                if(!ignoreSyncEvent) emitSync(syncPlayer.paused ? 'paused' : 'playing');
+            });
+
+            // Periodic sync to keep everyone perfectly aligned and help late-joiners
+            syncInterval = setInterval(() => {
+                if (!syncPlayer.paused && !ignoreSyncEvent) {
+                    emitSync('playing');
+                }
+            }, 3000); // Send sync every 3 seconds
+
+        } else {
+            // Normal user
+            syncPlayer.controls = false; // Disable default controls
+            syncPlayer.style.pointerEvents = 'none'; // Prevent clicking to pause
+        }
+        isVideoUIInitialized = true;
+    }
+
+    // Always check for existing video state when setting up (e.g., reconnecting)
     if (isUserAdmin) {
-        // Admin controls events
-        syncPlayer.addEventListener('play', () => {
-            if(!ignoreSyncEvent) emitSync('playing');
-        });
-        syncPlayer.addEventListener('pause', () => {
-            if(!ignoreSyncEvent) emitSync('paused');
-        });
-        syncPlayer.addEventListener('seeked', () => {
-            if(!ignoreSyncEvent) emitSync(syncPlayer.paused ? 'paused' : 'playing');
-        });
-
-        // Periodic sync to keep everyone perfectly aligned and help late-joiners
-        setInterval(() => {
-            if (!syncPlayer.paused && !ignoreSyncEvent) {
-                emitSync('playing');
-            }
-        }, 3000); // Send sync every 3 seconds
-
         // If the admin is returning and a video was already uploaded, load it immediately
         if (roomData.hasVideo) {
             loadVideo(roomData.videoTime, roomData.videoStatus);
@@ -111,12 +124,7 @@ function setupVideoUI(roomData) {
             adminControls.classList.remove('hidden');
             waitingMessage.classList.add('hidden');
         }
-
     } else {
-        // Normal user
-        syncPlayer.controls = false; // Disable default controls
-        syncPlayer.style.pointerEvents = 'none'; // Prevent clicking to pause
-
         if (roomData.hasVideo) {
             loadVideo(roomData.videoTime, roomData.videoStatus);
         }
@@ -293,11 +301,22 @@ joinBtn.addEventListener('click', () => {
     });
 });
 
-// Auto-rejoin logic on page load
-window.addEventListener('DOMContentLoaded', () => {
+// --- Anti-Sleep Heartbeat ---
+// Render free tier sleeps after 15 minutes of HTTP inactivity.
+// Pinging via standard fetch keeps the server awake while watching a long movie.
+setInterval(() => {
+    fetch('/ping').catch(err => console.log('Ping failed:', err));
+}, 5 * 60 * 1000); // 5 minutes
+
+// Auto-rejoin logic on socket connect/reconnect
+// This handles both the initial page load AND background reconnects when wifi drops
+socket.on('connect', () => {
+    console.log('Socket connected/reconnected with ID:', socket.id);
+
     const lastRoomId = localStorage.getItem('syncstream_lastRoomId');
     const lastNickname = localStorage.getItem('syncstream_nickname');
 
+    // Only auto-join if we have the credentials AND we aren't currently explicitly sitting on the landing page
     if (lastRoomId && lastNickname) {
         nicknameInput.value = lastNickname;
         joinRoomIdInput.value = lastRoomId;
@@ -307,9 +326,13 @@ window.addEventListener('DOMContentLoaded', () => {
             if (response.success) {
                 myNickname = lastNickname;
                 showPartyUI(lastRoomId, response.isAdmin, response);
-                appendMessage('System', 'You were automatically reconnected.');
+                appendMessage('System', 'You were automatically reconnected to the room.');
             } else {
+                // If it fails (e.g., room was deleted because server slept), clear storage and show error
                 localStorage.removeItem('syncstream_lastRoomId');
+                errorMsg.textContent = "The room no longer exists (the server might have restarted). Please create a new one.";
+                landingDiv.classList.remove('hidden');
+                partyDiv.classList.add('hidden');
             }
         });
     }
