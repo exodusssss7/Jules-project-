@@ -169,12 +169,50 @@ function loadVideo(startTime = 0, initialStatus = 'paused', externalUrl = null) 
     };
 }
 
+
+// Helper function to convert cloud drive share links to direct raw streaming URLs
+function convertToDirectStreamUrl(url) {
+    try {
+        const parsedUrl = new URL(url);
+
+        // Handle Google Drive
+        // Expected format: https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+        if (parsedUrl.hostname.includes('drive.google.com')) {
+            const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            if (match && match[1]) {
+                // Return the direct download/stream link format for Google Drive
+                return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+            }
+        }
+
+        // Handle Dropbox
+        // Expected format: https://www.dropbox.com/s/xyz123/video.mp4?dl=0
+        if (parsedUrl.hostname.includes('dropbox.com')) {
+            // Replace ?dl=0 with ?raw=1 to force direct streaming instead of the web UI
+            const newUrl = new URL(url);
+            newUrl.searchParams.delete('dl');
+            newUrl.searchParams.set('raw', '1');
+            return newUrl.toString();
+        }
+
+        // Return original URL if it doesn't match known patterns
+        return url;
+    } catch (e) {
+        console.error("URL parsing error:", e);
+        return url;
+    }
+}
+
 loadUrlBtn.addEventListener('click', () => {
-    const url = videoUrlInput.value.trim();
+    let url = videoUrlInput.value.trim();
     if (!url) {
         alert("Please enter a valid video URL");
         return;
     }
+
+    // Convert the URL to a direct streaming link if it's from GDrive or Dropbox
+    url = convertToDirectStreamUrl(url);
+
 
     // Tell the server we are using a URL
     socket.emit('setVideoUrl', { url: url });
