@@ -79,7 +79,10 @@ app.post('/upload/:roomId', checkRoomExists, upload.single('video'), (req, res) 
     rooms[roomId].videoPath = req.file.path;
 
     // Notify all users in the room that video is ready
-    io.to(roomId).emit('videoReady');
+    // Add a small delay to ensure file system has flushed the file and it's readable
+    setTimeout(() => {
+        io.to(roomId).emit('videoReady');
+    }, 500);
 
     res.json({ success: true, message: 'Video uploaded successfully' });
 });

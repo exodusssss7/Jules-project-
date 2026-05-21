@@ -146,16 +146,22 @@ function loadVideo(startTime = 0, initialStatus = 'paused') {
     waitingMessage.classList.add('hidden');
     playerContainer.classList.remove('hidden');
 
-    syncPlayer.src = `/video/${currentRoomId}`;
+    // Add a cache buster so the browser doesn't try to reuse a broken stream request
+    syncPlayer.src = `/video/${currentRoomId}?t=${Date.now()}`;
+    syncPlayer.load(); // explicitly tell it to load the new source
 
     syncPlayer.onloadedmetadata = () => {
         syncPlayer.currentTime = startTime;
         if (initialStatus === 'playing') {
-            // Need user interaction to autoplay in modern browsers,
-            // but we'll try our best
             syncPlayer.play().catch(e => console.log("Autoplay prevented:", e));
         }
     };
+
+    syncPlayer.onerror = (e) => {
+        console.error("Video error:", syncPlayer.error);
+        appendMessage('System', 'Failed to load video. It might be processing or unsupported.');
+    };
+}
 }
 
 // Handle video upload (Admin only)
