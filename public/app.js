@@ -168,8 +168,6 @@ function loadVideo(startTime = 0, initialStatus = 'paused', externalUrl = null) 
         appendMessage('System', 'Failed to load video. It might be processing or unsupported.');
     };
 }
-}
-
 
 loadUrlBtn.addEventListener('click', () => {
     const url = videoUrlInput.value.trim();
