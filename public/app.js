@@ -24,6 +24,8 @@ const waitingMessage = document.getElementById('waitingMessage');
 const videoUpload = document.getElementById('videoUpload');
 const uploadBtn = document.getElementById('uploadBtn');
 const uploadStatus = document.getElementById('uploadStatus');
+const videoUrlInput = document.getElementById('videoUrlInput');
+const loadUrlBtn = document.getElementById('loadUrlBtn');
 const progressContainer = document.getElementById('progressContainer');
 const uploadProgress = document.getElementById('uploadProgress');
 const uploadPercent = document.getElementById('uploadPercent');
@@ -122,14 +124,14 @@ function setupVideoUI(roomData) {
     if (isUserAdmin) {
         // If the admin is returning and a video was already uploaded, load it immediately
         if (roomData.hasVideo) {
-            loadVideo(roomData.videoTime, roomData.videoStatus);
+            loadVideo(roomData.videoTime, roomData.videoStatus, roomData.videoUrl);
         } else {
             adminControls.classList.remove('hidden');
             waitingMessage.classList.add('hidden');
         }
     } else {
         if (roomData.hasVideo) {
-            loadVideo(roomData.videoTime, roomData.videoStatus);
+            loadVideo(roomData.videoTime, roomData.videoStatus, roomData.videoUrl);
         }
     }
 }
@@ -141,13 +143,17 @@ function emitSync(status) {
     });
 }
 
-function loadVideo(startTime = 0, initialStatus = 'paused') {
+function loadVideo(startTime = 0, initialStatus = 'paused', externalUrl = null) {
     adminControls.classList.add('hidden');
     waitingMessage.classList.add('hidden');
     playerContainer.classList.remove('hidden');
 
-    // Add a cache buster so the browser doesn't try to reuse a broken stream request
-    syncPlayer.src = `/video/${currentRoomId}?t=${Date.now()}`;
+    if (externalUrl) {
+        syncPlayer.src = externalUrl;
+    } else {
+        // Local upload fallback via server
+        syncPlayer.src = `/video/${currentRoomId}?t=${Date.now()}`;
+    }
     syncPlayer.load(); // explicitly tell it to load the new source
 
     syncPlayer.onloadedmetadata = () => {
@@ -163,6 +169,22 @@ function loadVideo(startTime = 0, initialStatus = 'paused') {
     };
 }
 }
+
+
+loadUrlBtn.addEventListener('click', () => {
+    const url = videoUrlInput.value.trim();
+    if (!url) {
+        alert("Please enter a valid video URL");
+        return;
+    }
+
+    // Tell the server we are using a URL
+    socket.emit('setVideoUrl', { url: url });
+
+    // Load it locally for the admin
+    loadVideo(0, 'paused', url);
+    appendMessage('System', 'External video loaded successfully!');
+});
 
 // Handle video upload (Admin only)
 uploadBtn.addEventListener('click', async () => {
@@ -226,10 +248,10 @@ uploadBtn.addEventListener('click', async () => {
 });
 
 // Socket Events for Video Sync
-socket.on('videoReady', () => {
+socket.on('videoReady', (data) => {
     if (!isUserAdmin) {
-        appendMessage('System', 'The Admin has uploaded the video. Video is ready!');
-        loadVideo();
+        appendMessage('System', 'The Admin has provided the video. Video is ready!');
+        loadVideo(0, 'paused', data ? data.url : null);
     }
 });
 

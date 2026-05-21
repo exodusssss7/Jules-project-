@@ -47,14 +47,27 @@
         <div class="main-content">
             <div class="video-container">
                 <div id="adminControls" class="hidden">
-                    <h3>Upload Video for Party</h3>
-                    <input type="file" id="videoUpload" accept="video/mp4,video/webm,video/ogg,video/x-matroska,.mkv">
-                    <button id="uploadBtn" class="btn primary">Upload & Start</button>
-
-                    <div id="progressContainer" class="hidden">
-                        <progress id="uploadProgress" max="100" value="0"></progress>
-                        <span id="uploadPercent">0%</span>
+                    <h3>Provide Video for Party</h3>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="videoUrlInput">1. Paste Direct URL (Google Drive, Dropbox, etc.)</label>
+                        <div style="display: flex; gap: 10px; margin-top: 5px;">
+                            <input type="text" id="videoUrlInput" placeholder="https://example.com/video.mp4">
+                            <button id="loadUrlBtn" class="btn primary small">Load URL</button>
+                        </div>
                     </div>
+
+                    <div style="border-top: 2px dashed var(--border-color); padding-top: 1rem;">
+                        <label for="videoUpload">2. Or Upload Local File (max 4GB)</label>
+                        <input type="file" id="videoUpload" accept="video/mp4,video/webm,video/ogg,video/x-matroska,.mkv" style="margin-top: 5px; margin-bottom: 1rem;">
+                        <button id="uploadBtn" class="btn primary">Upload & Start</button>
+
+                        <div id="progressContainer" class="hidden">
+                            <progress id="uploadProgress" max="100" value="0"></progress>
+                            <span id="uploadPercent">0%</span>
+                        </div>
+                        <p id="uploadStatus"></p>
+                    </div>
+                </div>
                     <p id="uploadStatus"></p>
                 </div>
                 <div id="playerContainer" class="hidden">

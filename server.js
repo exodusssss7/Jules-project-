@@ -29,6 +29,7 @@ if (!fs.existsSync('uploads/')){
 //   videoStatus: 'playing' | 'paused',
 //   hasVideo: boolean,
 //   videoPath: string,
+//   videoUrl: string | null,
 //   cleanupTimer: NodeJS.Timeout | null
 // }
 const rooms = {};
@@ -159,6 +160,7 @@ io.on('connection', (socket) => {
             videoTime: 0,
             videoStatus: 'paused',
             hasVideo: false,
+            videoUrl: null,
             cleanupTimer: null
         };
 
@@ -203,7 +205,8 @@ io.on('connection', (socket) => {
             isAdmin: isAdmin,
             hasVideo: room.hasVideo,
             videoTime: room.videoTime,
-            videoStatus: room.videoStatus
+            videoStatus: room.videoStatus,
+            videoUrl: room.videoUrl
         });
     });
 
@@ -211,6 +214,22 @@ io.on('connection', (socket) => {
         const roomId = socket.data.roomId;
         if (roomId && rooms[roomId]) {
             io.to(roomId).emit('chatMessage', { sender: socket.data.nickname, message });
+        }
+    });
+
+
+    // Admin sets external video URL
+    socket.on('setVideoUrl', ({ url }) => {
+        const roomId = socket.data.roomId;
+        const userId = socket.data.userId;
+
+        if (roomId && rooms[roomId] && rooms[roomId].adminId === userId) {
+            rooms[roomId].hasVideo = true;
+            rooms[roomId].videoUrl = url;
+            // Clear any local path if they switched to URL
+            rooms[roomId].videoPath = null;
+
+            io.to(roomId).emit('videoReady', { url: url });
         }
     });
 
