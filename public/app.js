@@ -532,3 +532,35 @@ leaveBtn.addEventListener('click', () => {
     // Refresh the page to reset state completely
     window.location.reload();
 });
+
+// --- Emoji Reaction Logic ---
+const emojiBtns = document.querySelectorAll('.emoji-btn');
+emojiBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const emoji = btn.getAttribute('data-emoji');
+        socket.emit('sendReaction', { emoji });
+    });
+});
+
+socket.on('receiveReaction', ({ emoji }) => {
+    // Only show if we are in fullscreen to not clutter normal UI
+    if (document.fullscreenElement) {
+        const wrapper = document.getElementById('videoWrapper');
+        const floatEl = document.createElement('div');
+        floatEl.classList.add('floating-emoji');
+        floatEl.textContent = emoji;
+
+        // Add random horizontal jitter to make it look organic
+        const randomX = Math.floor(Math.random() * 40) - 20;
+        floatEl.style.marginRight = `${randomX}px`;
+
+        wrapper.appendChild(floatEl);
+
+        // Remove after animation completes
+        setTimeout(() => {
+            if (wrapper.contains(floatEl)) {
+                wrapper.removeChild(floatEl);
+            }
+        }, 2500);
+    }
+});

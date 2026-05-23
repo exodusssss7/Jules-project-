@@ -218,6 +218,14 @@ io.on('connection', (socket) => {
     });
 
 
+
+    socket.on('sendReaction', ({ emoji }) => {
+        const roomId = socket.data.roomId;
+        if (roomId && rooms[roomId]) {
+            io.to(roomId).emit('receiveReaction', { emoji });
+        }
+    });
+
     // Admin sets external video URL
     socket.on('setVideoUrl', ({ url }) => {
         const roomId = socket.data.roomId;
