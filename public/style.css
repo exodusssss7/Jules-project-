@@ -289,7 +289,7 @@ body.dark-mode .error {
 }
 
 /* Hide the chat overlay when NOT in fullscreen */
-#videoWrapper:not(:fullscreen) #chatOverlay {
+#videoWrapper:not(.is-fullscreen) #chatOverlay {
     display: none;
 }
 
@@ -366,21 +366,21 @@ body.dark-mode .error {
 }
 
 /* Hide fullscreen elements when not in fullscreen */
-#videoWrapper:not(:fullscreen) #exitFsBtn,
-#videoWrapper:not(:fullscreen) #fastReplyContainer {
+#videoWrapper:not(.is-fullscreen) #exitFsBtn,
+#videoWrapper:not(.is-fullscreen) #fastReplyContainer {
     display: none !important;
 }
 
 /* When fullscreen, adjust video wrapper */
-#videoWrapper:fullscreen {
+#videoWrapper.is-fullscreen {
     border: none;
     box-shadow: none;
 }
-#videoWrapper:fullscreen #syncPlayer {
+#videoWrapper.is-fullscreen #syncPlayer {
     height: 100%;
     aspect-ratio: auto;
 }
-#videoWrapper:fullscreen #chatOverlay {
+#videoWrapper.is-fullscreen #chatOverlay {
     bottom: 120px;
     font-size: 1.2rem;
 }
@@ -591,6 +591,6 @@ body.dark-mode .chat-container h3 {
 }
 
 /* Hide when not fullscreen */
-#videoWrapper:not(:fullscreen) #fsEmojiBar {
+#videoWrapper:not(.is-fullscreen) #fsEmojiBar {
     display: none !important;
 }

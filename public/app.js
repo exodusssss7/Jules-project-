@@ -333,13 +333,29 @@ fullscreenBtn.addEventListener('click', () => {
 });
 
 // Update button text depending on fullscreen state
+
+// Update button text depending on fullscreen state
+
 document.addEventListener('fullscreenchange', () => {
     if (document.fullscreenElement) {
         fullscreenBtn.textContent = 'Exit Fullscreen';
+        videoWrapper.classList.add('is-fullscreen');
     } else {
         fullscreenBtn.textContent = 'Toggle Fullscreen';
+        videoWrapper.classList.remove('is-fullscreen');
     }
 });
+
+document.addEventListener('webkitfullscreenchange', () => {
+    if (document.webkitFullscreenElement) {
+        fullscreenBtn.textContent = 'Exit Fullscreen';
+        videoWrapper.classList.add('is-fullscreen');
+    } else {
+        fullscreenBtn.textContent = 'Toggle Fullscreen';
+        videoWrapper.classList.remove('is-fullscreen');
+    }
+});
+
 
 exitFsBtn.addEventListener('click', () => {
     if (document.exitFullscreen) {
@@ -542,9 +558,10 @@ emojiBtns.forEach(btn => {
     });
 });
 
+
 socket.on('receiveReaction', ({ emoji }) => {
     // Only show if we are in fullscreen to not clutter normal UI
-    if (document.fullscreenElement) {
+    if (document.getElementById('videoWrapper').classList.contains('is-fullscreen')) {
         const wrapper = document.getElementById('videoWrapper');
         const floatEl = document.createElement('div');
         floatEl.classList.add('floating-emoji');
