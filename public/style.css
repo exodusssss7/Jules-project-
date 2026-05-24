@@ -538,10 +538,10 @@ body.dark-mode .chat-container h3 {
 /* Emoji Bar */
 #fsEmojiBar {
     position: absolute;
-    bottom: 75px; /* Above fastReplyContainer */
-    right: 20px;
+    bottom: 10px;
+    left: 10px;
     display: flex;
-    gap: 10px;
+    gap: 8px;
     z-index: 20;
 }
 
@@ -570,8 +570,8 @@ body.dark-mode .chat-container h3 {
 /* Floating Emoji Animation */
 .floating-emoji {
     position: absolute;
-    bottom: 120px; /* Start above emoji bar */
-    right: 50px; /* Rough alignment with bar */
+    bottom: 60px; /* Start above emoji bar */
+    left: 20px; /* Align with left side */
     font-size: 2rem;
     pointer-events: none;
     z-index: 15;
@@ -591,6 +591,3 @@ body.dark-mode .chat-container h3 {
 }
 
 /* Hide when not fullscreen */
-#videoWrapper:not(.is-fullscreen) #fsEmojiBar {
-    display: none !important;
-}

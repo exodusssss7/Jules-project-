@@ -559,25 +559,23 @@ emojiBtns.forEach(btn => {
 });
 
 
+
 socket.on('receiveReaction', ({ emoji }) => {
-    // Only show if we are in fullscreen to not clutter normal UI
-    if (document.getElementById('videoWrapper').classList.contains('is-fullscreen')) {
-        const wrapper = document.getElementById('videoWrapper');
-        const floatEl = document.createElement('div');
-        floatEl.classList.add('floating-emoji');
-        floatEl.textContent = emoji;
+    const wrapper = document.getElementById('videoWrapper');
+    const floatEl = document.createElement('div');
+    floatEl.classList.add('floating-emoji');
+    floatEl.textContent = emoji;
 
-        // Add random horizontal jitter to make it look organic
-        const randomX = Math.floor(Math.random() * 40) - 20;
-        floatEl.style.marginRight = `${randomX}px`;
+    // Add random horizontal jitter to make it look organic
+    const randomX = Math.floor(Math.random() * 40) - 20;
+    floatEl.style.marginLeft = `${randomX}px`;
 
-        wrapper.appendChild(floatEl);
+    wrapper.appendChild(floatEl);
 
-        // Remove after animation completes
-        setTimeout(() => {
-            if (wrapper.contains(floatEl)) {
-                wrapper.removeChild(floatEl);
-            }
-        }, 2500);
-    }
+    // Remove after animation completes
+    setTimeout(() => {
+        if (wrapper.contains(floatEl)) {
+            wrapper.removeChild(floatEl);
+        }
+    }, 2500);
 });
